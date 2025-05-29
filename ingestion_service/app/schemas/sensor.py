@@ -18,7 +18,7 @@ class SensorInDB(SensorBase):
     updated_at: datetime
 
     class Config:
-        from_attributes = True # Pydantic V2 (formerly orm_mode)
+        from_attributes = True
 
 
 class SensorRead(SensorInDB):

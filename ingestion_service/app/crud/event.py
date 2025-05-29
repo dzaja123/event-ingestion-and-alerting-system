@@ -30,7 +30,7 @@ class CRUDEvent:
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
         event_type: Optional[str] = None,
-        device_type: Optional[str] = None # This requires a join with Sensor
+        device_type: Optional[str] = None
     ) -> List[EventRead]:
         query = select(Event).order_by(Event.timestamp.desc())
 

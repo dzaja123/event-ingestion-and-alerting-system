@@ -14,13 +14,12 @@ class CacheService:
         if cached_data:
             try:
                 return SensorRead.model_validate(json.loads(cached_data))
-            except Exception: # Catch JSON decode errors or Pydantic validation errors
+            except Exception:
                 return None
         return None
 
     async def set_sensor_details(self, sensor: SensorRead):
         cache_key = f"sensor:{sensor.device_id}"
-        # model_dump_json ensures datetime is ISO formatted
         await self.redis_client.set(cache_key, sensor.model_dump_json(), ex=settings.SENSOR_CACHE_TTL_SECONDS)
 
     async def close(self):
