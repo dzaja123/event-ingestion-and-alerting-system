@@ -14,6 +14,4 @@ class Alert(Base):
     event_id = Column(Integer, nullable=True, index=True)  # Reference to original event
     device_id = Column(String, index=True, nullable=False)
     alert_type = Column(String, index=True, nullable=False)  # unauthorized_access, speed_violation, intrusion_detection
-    timestamp = Column(DateTime(timezone=True), nullable=False, index=True)
-    details = Column(JSONB, nullable=True)  # Additional alert-specific data
-    severity = Column(String, default="medium")  # low, medium, high, critical 
+    timestamp = Column(DateTime(timezone=True), nullable=False, index=True) 
