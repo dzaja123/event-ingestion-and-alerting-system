@@ -6,7 +6,8 @@ from pydantic import AfterValidator
 # Regex for MAC address validation (common formats)
 MAC_ADDRESS_REGEX = re.compile(
     r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$|"
-    r"^([0-9A-Fa-f]{4}[.]){2}([0-9A-Fa-f]{4})$"
+    r"^([0-9A-Fa-f]{4}[.]){2}([0-9A-Fa-f]{4})$|"
+    r"^([0-9A-Fa-f]{2}){6}$"
 )
 
 

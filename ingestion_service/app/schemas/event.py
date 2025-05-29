@@ -16,7 +16,7 @@ class EventCreate(EventBase):
     user_id: Optional[str] = None
     
     # Speed violation fields  
-    speed_kmh: Optional[int] = None
+    speed_kmh: Optional[int] = Field(None, ge=0, le=300, description="Speed in km/h (0-300)")
     location: Optional[str] = None
     
     # Intrusion detection fields
