@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+sqlalchemy[asyncio] # For SQLAlchemy 2.0 async support
+asyncpg # PostgreSQL driver
+psycopg2-binary # For Alembic (sync operations)
+alembic
+redis[hiredis] # For aioredis
+aio-pika # RabbitMQ async client
+python-dotenv # For local .env loading, though docker-compose handles env vars
+# For development/testing
+pytest
+pytest-asyncio
+httpx # For testing FastAPI endpoints
