@@ -5,45 +5,66 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: iot_postgres
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: iot_user
-      POSTGRES_PASSWORD: iot_password
-      POSTGRES_DB: iot_database
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U iot_user -d iot_database"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    restart: unless-stopped
 
   # Redis Cache
   redis:
     image: redis:7-alpine
     container_name: iot_redis
+    env_file:
+      - .env
     ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes
+      - "${REDIS_PORT}:6379"
+    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD}"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+    restart: unless-stopped
 
   # RabbitMQ Message Broker
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: iot_rabbitmq
+    env_file:
+      - .env
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
     ports:
-      - "5672:5672"
-      - "15672:15672"  # Management UI
+      - "${RABBITMQ_PORT}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT}:15672"  # Management UI
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
@@ -51,6 +72,13 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    restart: unless-stopped
 
   # Ingestion Service
   ingestion_service:
@@ -58,21 +86,24 @@ services:
       context: ./ingestion_service
       dockerfile: Dockerfile
     container_name: iot_ingestion
+    env_file:
+      - .env
     environment:
-      POSTGRES_SERVER: postgres
-      POSTGRES_USER: iot_user
-      POSTGRES_PASSWORD: iot_password
-      POSTGRES_DB: iot_database
-      POSTGRES_PORT: "5432"
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_USER: guest
-      RABBITMQ_PASS: guest
-      RABBITMQ_PORT: 5672
-      LOG_LEVEL: INFO
+      POSTGRES_SERVER: ${POSTGRES_SERVER}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      LOG_LEVEL: ${LOG_LEVEL}
     ports:
-      - "8000:8000"
+      - "${INGESTION_PORT}:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -82,12 +113,24 @@ services:
         condition: service_healthy
     volumes:
       - ./ingestion_service:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    restart: unless-stopped
     command: >
       sh -c "
-        echo 'Waiting for services to be ready...' &&
-        sleep 10 &&
-        echo 'Starting application...' &&
-        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+        echo 'Waiting for dependencies to be ready...' &&
+        sleep 15 &&
+        echo 'Starting Ingestion Service...' &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-level info
       "
 
   # Alerting Service
@@ -96,21 +139,26 @@ services:
       context: ./alerting_service
       dockerfile: Dockerfile
     container_name: iot_alerting
+    env_file:
+      - .env
     environment:
-      POSTGRES_SERVER: postgres
-      POSTGRES_USER: iot_user
-      POSTGRES_PASSWORD: iot_password
-      POSTGRES_DB: iot_database
-      POSTGRES_PORT: "5432"
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_USER: guest
-      RABBITMQ_PASS: guest
-      RABBITMQ_PORT: 5672
-      LOG_LEVEL: INFO
+      POSTGRES_SERVER: ${POSTGRES_SERVER}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      LOG_LEVEL: ${LOG_LEVEL}
+      SPEED_VIOLATION_THRESHOLD: ${SPEED_VIOLATION_THRESHOLD}
+      AUTHORIZED_USERS_CACHE_TTL: ${AUTHORIZED_USERS_CACHE_TTL}
     ports:
-      - "8001:8000"
+      - "${ALERTING_PORT}:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -119,22 +167,38 @@ services:
       rabbitmq:
         condition: service_healthy
       ingestion_service:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - ./alerting_service:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    restart: unless-stopped
     command: >
       sh -c "
-        echo 'Waiting for services to be ready...' &&
-        sleep 15 &&
-        echo 'Starting alerting service...' &&
-        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+        echo 'Waiting for dependencies and ingestion service...' &&
+        sleep 20 &&
+        echo 'Starting Alerting Service...' &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-level info
       "
 
 volumes:
   postgres_data:
+    driver: local
   redis_data:
+    driver: local
   rabbitmq_data:
+    driver: local
 
 networks:
   default:
     name: iot_network
+    driver: bridge
