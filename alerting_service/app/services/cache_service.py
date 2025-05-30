@@ -39,6 +39,13 @@ class CacheService:
         except Exception as e:
             logger.error(f"Error adding authorized user to cache: {e}")
 
+    async def remove_authorized_user(self, user_id: str):
+        """Remove a single authorized user from the cache"""
+        try:
+            await self.redis_client.srem("authorized_users", user_id)
+        except Exception as e:
+            logger.error(f"Error removing authorized user from cache: {e}")
+
     async def is_user_authorized(self, user_id: str) -> bool:
         """Check if user is in the authorized cache"""
         try:

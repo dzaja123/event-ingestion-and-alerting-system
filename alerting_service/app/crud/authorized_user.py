@@ -28,5 +28,14 @@ class CRUDAuthorizedUser:
         user = await self.get_by_user_id(db, user_id=user_id)
         return user is not None
 
+    async def delete(self, db: AsyncSession, *, user_id: str) -> bool:
+        result = await db.execute(select(AuthorizedUser).filter(AuthorizedUser.user_id == user_id))
+        user = result.scalars().first()
+        if user:
+            await db.delete(user)
+            await db.commit()
+            return True
+        return False
 
-authorized_user = CRUDAuthorizedUser() 
+
+authorized_user = CRUDAuthorizedUser()
