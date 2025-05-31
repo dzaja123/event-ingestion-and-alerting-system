@@ -106,9 +106,27 @@ class TestAlertsAPI:
         response = await client.get("/api/v1/alerts/999")
         assert response.status_code == 404
 
-    async def test_health_endpoint(self, client: AsyncClient):
+    async def test_health_endpoint(self, client: AsyncClient, mock_cache_service):
         """Test health check endpoint."""
+        from unittest.mock import AsyncMock, MagicMock
+        from app.services.rabbitmq_consumer import rabbitmq_consumer
+        
+        # Mock Redis ping
+        mock_cache_service.redis_client.ping = AsyncMock(return_value=True)
+        
+        # Mock RabbitMQ connection
+        mock_connection = MagicMock()
+        mock_connection.is_closed = False
+        rabbitmq_consumer.connection = mock_connection
+        rabbitmq_consumer.consuming = True
+        
         response = await client.get("/health")
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "healthy" 
+        assert data["status"] == "healthy"
+        assert data["service"] == "alerting_service"
+        assert "dependencies" in data
+        assert "consuming" in data
+        assert data["dependencies"]["database"] == "healthy"
+        assert data["dependencies"]["redis"] == "healthy"
+        assert data["dependencies"]["rabbitmq"] == "healthy" 

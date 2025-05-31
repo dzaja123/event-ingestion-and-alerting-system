@@ -53,4 +53,27 @@ class TestSensorsAPI:
     async def test_get_sensor_not_found(self, client: AsyncClient):
         """Test getting unregistered sensor."""
         response = await client.get("/api/v1/sensors/FF:FF:FF:FF:FF:FF")
-        assert response.status_code == 404 
+        assert response.status_code == 404
+
+    async def test_health_endpoint(self, client: AsyncClient, mock_cache_service, mock_message_queue):
+        """Test health check endpoint."""
+        from unittest.mock import AsyncMock, MagicMock
+        from app.services.message_queue_service import message_queue_service
+        
+        # Mock Redis ping
+        mock_cache_service.redis_client.ping = AsyncMock(return_value=True)
+        
+        # Mock RabbitMQ connection
+        mock_connection = MagicMock()
+        mock_connection.is_closed = False
+        message_queue_service.connection = mock_connection
+        
+        response = await client.get("/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "healthy"
+        assert data["service"] == "ingestion_service"
+        assert "dependencies" in data
+        assert data["dependencies"]["database"] == "healthy"
+        assert data["dependencies"]["redis"] == "healthy"
+        assert data["dependencies"]["rabbitmq"] == "healthy" 
