@@ -76,4 +76,33 @@ class TestSensorsAPI:
         assert "dependencies" in data
         assert data["dependencies"]["database"] == "healthy"
         assert data["dependencies"]["redis"] == "healthy"
-        assert data["dependencies"]["rabbitmq"] == "healthy" 
+        assert data["dependencies"]["rabbitmq"] == "healthy"
+
+    async def test_update_sensor_success(self, client: AsyncClient, sample_sensor_data):
+        """Test successful sensor update."""
+        # Create sensor first
+        await client.post("/api/v1/sensors/", json=sample_sensor_data)
+        device_id = sample_sensor_data["device_id"]
+
+        # Update sensor device_type
+        update_data = {"device_type": "security_camera"}
+        response = await client.put(f"/api/v1/sensors/{device_id}", json=update_data)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["device_id"] == device_id
+        assert data["device_type"] == "security_camera"
+
+    async def test_delete_sensor_success(self, client: AsyncClient, sample_sensor_data):
+        """Test successful sensor deletion."""
+        # Create sensor first
+        await client.post("/api/v1/sensors/", json=sample_sensor_data)
+        device_id = sample_sensor_data["device_id"]
+
+        # Delete sensor
+        response = await client.delete(f"/api/v1/sensors/{device_id}")
+        assert response.status_code == 204
+        
+        # Verify sensor is no longer accessible
+        response = await client.get(f"/api/v1/sensors/{device_id}")
+        assert response.status_code == 404

@@ -150,6 +150,8 @@ Two microservices communicate via RabbitMQ:
 - `GET /api/v1/sensors` - List sensors
 - `POST /api/v1/events` - Submit events
 - `GET /api/v1/events` - Retrieve events with filters
+- `PUT /api/v1/sensors/{device_id}` - Update sensor
+- `DELETE /api/v1/sensors/{device_id}` - Delete sensor
 
 ### Alerting service (port 8001)
 - `GET /api/v1/alerts` - Retrieve alerts with filters

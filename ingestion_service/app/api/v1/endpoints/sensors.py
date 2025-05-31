@@ -57,9 +57,52 @@ async def read_sensor(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Get a sensor by its device ID.
+    Get a sensor by its device ID
     """
     sensor = await crud.sensor.get_by_device_id(db, device_id=device_id)
     if not sensor:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sensor not found")
-    return sensor 
+    return sensor
+
+
+@router.put("/{device_id}", response_model=schemas.sensor.SensorRead)
+async def update_sensor(
+    device_id: MACAddress,
+    sensor_update: schemas.sensor.SensorUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Update sensor details (device_type only)
+    """
+    sensor = await crud.sensor.update_by_device_id(db, device_id=device_id, obj_in=sensor_update)
+    if not sensor:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Sensor not found or inactive"
+        )
+
+    # Invalidate cache and update with new data
+    await cache_service.delete_sensor_details(device_id)
+    sensor_read = schemas.sensor.SensorRead.model_validate(sensor)
+    await cache_service.set_sensor_details(sensor_read)
+    
+    return sensor_read
+
+
+@router.delete("/{device_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_sensor(
+    device_id: MACAddress,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Permanently delete sensor and remove from cache
+    """
+    success = await crud.sensor.delete_by_device_id(db, device_id=device_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Sensor not found"
+        )
+
+    # Remove from cache
+    await cache_service.delete_sensor_details(device_id)
