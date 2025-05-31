@@ -1,13 +1,14 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 import logging
 import uvicorn
+from sqlalchemy import text
 
 from app.api.v1.api import api_router
 from app.core.config import settings
 from app.services.message_queue_service import message_queue_service
 from app.services.cache_service import cache_service
-from app.db.session import engine
+from app.db.session import engine, AsyncSessionLocal
 from app.models.models import Base
 
 
@@ -59,8 +60,45 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/health")
 async def health_check():
-    # TODO: Add health checks for DB, Redis, MQ
-    return {"status": "healthy"}
+    """Health check endpoint with dependency verification"""
+    health_status = {
+        "status": "healthy",
+        "service": "ingestion_service",
+        "dependencies": {}
+    }
+    
+    # Check database
+    try:
+        async with AsyncSessionLocal() as db:
+            await db.execute(text("SELECT 1"))
+        health_status["dependencies"]["database"] = "healthy"
+    except Exception as e:
+        health_status["dependencies"]["database"] = f"unhealthy: {str(e)}"
+        health_status["status"] = "unhealthy"
+    
+    # Check Redis
+    try:
+        await cache_service.redis_client.ping()
+        health_status["dependencies"]["redis"] = "healthy"
+    except Exception as e:
+        health_status["dependencies"]["redis"] = f"unhealthy: {str(e)}"
+        health_status["status"] = "unhealthy"
+    
+    # Check RabbitMQ
+    try:
+        if message_queue_service.connection and not message_queue_service.connection.is_closed:
+            health_status["dependencies"]["rabbitmq"] = "healthy"
+        else:
+            health_status["dependencies"]["rabbitmq"] = "unhealthy: connection not established"
+            health_status["status"] = "unhealthy"
+    except Exception as e:
+        health_status["dependencies"]["rabbitmq"] = f"unhealthy: {str(e)}"
+        health_status["status"] = "unhealthy"
+    
+    if health_status["status"] == "unhealthy":
+        raise HTTPException(status_code=503, detail=health_status)
+    
+    return health_status
 
 
 if __name__ == "__main__":
