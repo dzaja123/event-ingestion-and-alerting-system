@@ -9,6 +9,12 @@ class EventBase(BaseModel):
     device_id: MACAddress
     timestamp: datetime
     event_type: str
+    
+    @field_validator('device_id')
+    @classmethod
+    def normalize_device_id(cls, v):
+        """Normalize MAC address to uppercase."""
+        return v.upper() if isinstance(v, str) else v
 
 
 class EventCreate(EventBase):
