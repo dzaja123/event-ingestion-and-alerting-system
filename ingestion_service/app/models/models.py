@@ -1,5 +1,4 @@
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 
@@ -18,6 +17,6 @@ class Event(Base):
     device_id = Column(String, index=True, nullable=False)
     timestamp = Column(DateTime(timezone=True), nullable=False, index=True)
     event_type = Column(String, index=True, nullable=False)
-    data = Column(JSONB, nullable=True) # Flexible field for specific event data
+    data = Column(JSON, nullable=True)
 
     sensor = relationship("Sensor", back_populates="events")

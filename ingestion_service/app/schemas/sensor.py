@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 from typing import Literal
 from app.schemas.common import MACAddress
@@ -10,6 +10,12 @@ class SensorBase(BaseModel):
         ..., 
         description="Type of IoT sensor device"
     )
+    
+    @field_validator('device_id')
+    @classmethod
+    def normalize_device_id(cls, v):
+        """Normalize MAC address to uppercase."""
+        return v.upper() if isinstance(v, str) else v
 
 
 class SensorCreate(SensorBase):
