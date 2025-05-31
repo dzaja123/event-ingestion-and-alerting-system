@@ -10,8 +10,9 @@ git clone https://github.com/dzaja123/event-ingestion-and-alerting-system.git
 cd event-ingestion-and-alerting-system
 
 # Configure environment
-# Linux/macOS
+# macOS/Linux
 cp .env.example .env
+
 # Windows
 copy .env.example .env
 
@@ -52,8 +53,6 @@ pip install -r requirements.txt
 
 python run_tests.py
 ```
-
-
 
 **Access points:**
 - Ingestion API: http://localhost:8000/docs
