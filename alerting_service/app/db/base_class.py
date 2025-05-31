@@ -1,10 +1,9 @@
 from typing import Any
-from sqlalchemy.ext.declarative import as_declarative, declared_attr
+from sqlalchemy.orm import DeclarativeBase, declared_attr
 from sqlalchemy import Column, DateTime, func
 
 
-@as_declarative()
-class Base:
+class Base(DeclarativeBase):
     id: Any
     __name__: str
 
@@ -13,4 +12,4 @@ class Base:
         return cls.__name__.lower() + "s"
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()) 
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
