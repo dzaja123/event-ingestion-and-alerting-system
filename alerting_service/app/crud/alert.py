@@ -13,7 +13,8 @@ class CRUDAlert:
             event_id=obj_in.event_id,
             device_id=obj_in.device_id,
             alert_type=obj_in.alert_type,
-            timestamp=obj_in.timestamp
+            timestamp=obj_in.timestamp,
+            photo_base64=obj_in.photo_base64
         )
         db.add(db_obj)
         await db.commit()

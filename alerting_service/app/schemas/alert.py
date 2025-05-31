@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal, Optional, Dict, Any
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 import re
 
@@ -28,6 +28,7 @@ class AlertBase(BaseModel):
 
 class AlertCreate(AlertBase):
     event_id: Optional[int] = None
+    photo_base64: Optional[str] = Field(None, description="Base64 encoded photo for intrusion detection alerts")
 
 
 class AlertRead(AlertBase):
@@ -35,6 +36,7 @@ class AlertRead(AlertBase):
     
     id: int
     event_id: Optional[int] = None
+    photo_base64: Optional[str] = None
     created_at: datetime
 
 

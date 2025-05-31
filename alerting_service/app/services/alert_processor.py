@@ -111,7 +111,8 @@ class AlertProcessor:
             event_id=event.id,
             device_id=event.device_id,
             alert_type="intrusion_detection",
-            timestamp=event.timestamp
+            timestamp=event.timestamp,
+            photo_base64=photo_base64
         )
 
     def _is_restricted_area(self, zone: str) -> bool:
