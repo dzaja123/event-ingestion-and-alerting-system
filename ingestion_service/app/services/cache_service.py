@@ -22,6 +22,11 @@ class CacheService:
         cache_key = f"sensor:{sensor.device_id}"
         await self.redis_client.set(cache_key, sensor.model_dump_json(), ex=settings.SENSOR_CACHE_TTL_SECONDS)
 
+    async def delete_sensor_details(self, device_id: str):
+        """Remove sensor details from cache"""
+        cache_key = f"sensor:{device_id}"
+        await self.redis_client.delete(cache_key)
+
     async def close(self):
         await self.redis_client.close()
 

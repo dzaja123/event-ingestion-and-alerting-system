@@ -68,6 +68,7 @@ def mock_cache_service():
     """Create a mock cache service."""
     cache_service.get_sensor_details = AsyncMock(return_value=None)
     cache_service.set_sensor_details = AsyncMock()
+    cache_service.delete_sensor_details = AsyncMock()
     cache_service.get_event_data = AsyncMock(return_value=None)
     cache_service.set_event_data = AsyncMock()
     return cache_service

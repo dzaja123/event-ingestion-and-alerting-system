@@ -1,13 +1,16 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy import update, delete
 from typing import List, Optional
 from app.models.models import Sensor
-from app.schemas.sensor import SensorCreate
+from app.schemas.sensor import SensorCreate, SensorUpdate
 
 
 class CRUDSensor:
     async def get_by_device_id(self, db: AsyncSession, *, device_id: str) -> Sensor | None:
-        result = await db.execute(select(Sensor).filter(Sensor.device_id == device_id))
+        result = await db.execute(
+            select(Sensor).filter(Sensor.device_id == device_id)
+        )
         return result.scalars().first()
 
     async def get_multi(
@@ -39,6 +42,39 @@ class CRUDSensor:
         await db.commit()
         await db.refresh(db_obj)
         return db_obj
+
+    async def update_by_device_id(
+        self, 
+        db: AsyncSession, 
+        *, 
+        device_id: str, 
+        obj_in: SensorUpdate
+    ) -> Sensor | None:
+        """Update sensor by device_id"""
+        # First check if sensor exists
+        existing_sensor = await self.get_by_device_id(db, device_id=device_id)
+        if not existing_sensor:
+            return None
+
+        # Only update if device_type is provided
+        if obj_in.device_type is not None:
+            await db.execute(
+                update(Sensor)
+                .where(Sensor.device_id == device_id)
+                .values(device_type=obj_in.device_type)
+            )
+            await db.commit()
+            await db.refresh(existing_sensor)
+
+        return existing_sensor
+
+    async def delete_by_device_id(self, db: AsyncSession, *, device_id: str) -> bool:
+        """Permanently delete sensor"""
+        result = await db.execute(
+            delete(Sensor).where(Sensor.device_id == device_id)
+        )
+        await db.commit()
+        return result.rowcount > 0
 
 
 sensor = CRUDSensor()
