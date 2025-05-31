@@ -9,4 +9,6 @@ aio-pika
 python-dotenv
 pytest
 pytest-asyncio
-httpx 
+pytest-cov
+httpx
+aiosqlite 
