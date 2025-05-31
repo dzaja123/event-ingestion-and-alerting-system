@@ -10,14 +10,50 @@ git clone https://github.com/dzaja123/event-ingestion-and-alerting-system.git
 cd event-ingestion-and-alerting-system
 
 # Configure environment
+# Linux/macOS
 cp .env.example .env
+# Windows
+copy .env.example .env
 
 # Start all services
 docker-compose up --build -d
 
 # Verify services are running
 docker-compose ps
+
+# Stop services
+docker-compose down
 ```
+
+## Testing
+
+### Unit tests
+```bash
+# Ingestion service
+docker-compose exec ingestion_service python -m pytest tests/ --asyncio-mode=auto -v
+
+# Alerting service
+docker-compose exec alerting_service python -m pytest tests/ --asyncio-mode=auto -v
+```
+
+### End-to-end tests
+```bash
+cd e2e
+
+python -m venv .venv
+
+# Windows
+.venv\Scripts\activate
+
+# macOS/Linux
+source .venv/bin/activate
+
+pip install -r requirements.txt
+
+python run_tests.py
+```
+
+
 
 **Access points:**
 - Ingestion API: http://localhost:8000/docs
@@ -161,34 +197,6 @@ Two microservices communicate via RabbitMQ:
 - `DELETE /api/v1/authorized-users/{user_id}` - Remove authorized user
 
 Full API documentation available at `/docs` endpoints.
-
-## Testing
-
-### Unit tests
-```bash
-# Ingestion service
-docker-compose exec ingestion_service python -m pytest tests/ --asyncio-mode=auto -v
-
-# Alerting service
-docker-compose exec alerting_service python -m pytest tests/ --asyncio-mode=auto -v
-```
-
-### End-to-end tests
-```bash
-cd e2e
-
-python -m venv .venv
-
-# Windows
-.venv\Scripts\activate
-
-# macOS/Linux
-source .venv/bin/activate
-
-pip install -r requirements.txt
-
-python run_tests.py
-```
 
 ## Configuration
 
