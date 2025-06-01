@@ -70,25 +70,37 @@ class RabbitMQConsumer:
         try:
             async with message.process():
                 # Parse the event data
-                event_data = json.loads(message.body.decode())
-                event = EventReceived(**event_data)
+                try:
+                    event_data = json.loads(message.body.decode())
+                    event = EventReceived(**event_data)
+                except (json.JSONDecodeError, ValueError) as e:
+                    logger.error(f"Failed to parse message body: {e}")
+                    # Message will be acknowledged and discarded
+                    return
                 
                 logger.info(f"Processing event {event.id} of type {event.event_type}")
                 
                 # Create database session
-                async with AsyncSessionLocal() as db:
-                    # Process the event and check if alert should be generated
-                    alert_create = await alert_processor.process_event(event, db)
-                    
-                    if alert_create:
-                        # Create and save the alert
-                        alert = await crud.alert.create(db=db, obj_in=alert_create)
-                        logger.info(f"Created alert {alert.id} for event {event.id}")
-                    else:
-                        logger.debug(f"No alert generated for event {event.id}")
+                try:
+                    async with AsyncSessionLocal() as db:
+                        # Process the event and check if alert should be generated
+                        alert_create = await alert_processor.process_event(event, db)
+                        
+                        if alert_create:
+                            # Create and save the alert
+                            alert = await crud.alert.create(db=db, obj_in=alert_create)
+                            logger.info(f"Created alert {alert.id} for event {event.id}")
+                        else:
+                            logger.debug(f"No alert generated for event {event.id}")
+                except Exception as e:
+                    logger.error(f"Database error processing event {event.id}: {e}")
+                    # Re-raise to trigger message retry
+                    raise
                         
         except Exception as e:
             logger.error(f"Error processing message: {e}")
+            # Message will be rejected and requeued
+            raise
 
     async def stop_consuming(self):
         """Stop consuming messages"""
@@ -111,4 +123,4 @@ class RabbitMQConsumer:
             logger.error(f"Error initializing authorized users cache: {e}")
 
 
-rabbitmq_consumer = RabbitMQConsumer() 
+rabbitmq_consumer = RabbitMQConsumer()

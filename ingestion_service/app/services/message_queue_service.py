@@ -28,11 +28,12 @@ class MessageQueueService:
 
     async def publish_event(self, event: EventRead):
         if not self.channel or not self.exchange:
-            logger.error("RabbitMQ channel or exchange not initialized. Call connect() first.")
-            await self.connect()
-            if not self.channel or not self.exchange:
-                 raise ConnectionError("RabbitMQ connection failed, cannot publish event.")
-
+            logger.error("RabbitMQ channel or exchange not initialized. Attempting to reconnect...")
+            try:
+                await self.connect()
+            except Exception as e:
+                logger.error(f"Failed to reconnect to RabbitMQ: {e}")
+                raise ConnectionError("RabbitMQ connection failed, cannot publish event.")
 
         message_body = event.model_dump_json().encode()
         message = aio_pika.Message(
@@ -46,8 +47,12 @@ class MessageQueueService:
                 routing_key=settings.RABBITMQ_ROUTING_KEY
             )
             logger.info(f"Event {event.id} published to RabbitMQ with routing key {settings.RABBITMQ_ROUTING_KEY}")
+        except aio_pika.exceptions.AMQPException as e:
+            logger.error(f"AMQP error publishing event {event.id}: {e}")
+            raise ConnectionError(f"Failed to publish event due to AMQP error: {e}")
         except Exception as e:
-            logger.error(f"Failed to publish event {event.id} to RabbitMQ: {e}")
+            logger.error(f"Unexpected error publishing event {event.id} to RabbitMQ: {e}")
+            raise
 
     async def close(self):
         if self.channel:

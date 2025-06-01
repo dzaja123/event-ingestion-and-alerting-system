@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from datetime import datetime
+import logging
 
 from app import crud, schemas
 from app.db.session import get_db
@@ -11,6 +12,7 @@ from app.services.validation_service import validation_service
 from app.schemas.event import EventCreate, EventRead
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/", response_model=EventRead, status_code=status.HTTP_201_CREATED)
@@ -71,10 +73,13 @@ async def create_event(
 
     try:
         await message_queue_service.publish_event(event_out)
+        logger.info(f"Event {event_out.id} successfully published to message queue")
     except ConnectionError as e:
-        print(f"Warning: Failed to publish event to RabbitMQ: {e}")
+        logger.warning(f"Failed to publish event {event_out.id} to RabbitMQ due to connection error: {e}")
+        # Event is still saved in DB, alerting service can process it later if needed
     except Exception as e:
-        print(f"Error during MQ publish: {e}")
+        logger.error(f"Unexpected error during MQ publish for event {event_out.id}: {e}")
+        # Event is still saved in DB, but alerting might be delayed
 
     return event_out
 
