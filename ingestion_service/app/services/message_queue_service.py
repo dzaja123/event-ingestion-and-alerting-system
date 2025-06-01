@@ -1,4 +1,3 @@
-import json
 import aio_pika
 from app.core.config import settings
 from app.schemas.event import EventRead

@@ -1,5 +1,7 @@
 import pytest
 from httpx import AsyncClient
+from unittest.mock import AsyncMock, MagicMock
+from app.services.message_queue_service import message_queue_service
 
 
 class TestSensorsAPI:
@@ -57,9 +59,7 @@ class TestSensorsAPI:
 
     async def test_health_endpoint(self, client: AsyncClient, mock_cache_service, mock_message_queue):
         """Test health check endpoint."""
-        from unittest.mock import AsyncMock, MagicMock
-        from app.services.message_queue_service import message_queue_service
-        
+
         # Mock Redis ping
         mock_cache_service.redis_client.ping = AsyncMock(return_value=True)
         
