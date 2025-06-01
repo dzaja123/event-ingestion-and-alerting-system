@@ -6,6 +6,7 @@ from app.schemas.common import MACAddress
 import base64
 import binascii
 import re
+from app.services.validation_service import validation_service
 
 
 class EventBase(BaseModel):
@@ -111,10 +112,7 @@ class EventCreate(RootModel[Union[AccessControlEvent, RadarSpeedEvent, Intrusion
             return data
 
         event_type = data.get('event_type')
-        
-        # Use validation service to avoid circular imports
-        from app.services.validation_service import validation_service
-        
+
         provided_fields = set(data.keys())
         is_valid, extra_fields = validation_service.validate_event_fields(event_type, provided_fields)
         
