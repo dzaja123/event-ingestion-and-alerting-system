@@ -115,7 +115,7 @@ async def sample_sensor(db_session: AsyncSession) -> Sensor:
 async def sample_event(db_session: AsyncSession, sample_sensor: Sensor) -> Event:
     """Create a sample event for testing."""
     event = Event(
-        device_id=sample_sensor.device_id,
+        sensor_id=sample_sensor.id,
         event_type="temperature_reading",
         data={"temperature": 25.5, "humidity": 60.0},
         timestamp=datetime.now(timezone.utc)
@@ -123,6 +123,8 @@ async def sample_event(db_session: AsyncSession, sample_sensor: Sensor) -> Event
     db_session.add(event)
     await db_session.commit()
     await db_session.refresh(event)
+    # Ensures sensor relationship is loaded for device_id property
+    await db_session.refresh(event, ['sensor'])
     return event
 
 

@@ -14,9 +14,13 @@ class Sensor(Base):
 class Event(Base):
     id = Column(Integer, primary_key=True, index=True)
     sensor_id = Column(Integer, ForeignKey("sensors.id"), nullable=False)
-    device_id = Column(String, index=True, nullable=False)
     timestamp = Column(DateTime(timezone=True), nullable=False, index=True)
     event_type = Column(String, index=True, nullable=False)
     data = Column(JSON, nullable=True)
 
     sensor = relationship("Sensor", back_populates="events")
+
+    @property
+    def device_id(self) -> str:
+        """Get device_id via sensor relationship for backward compatibility."""
+        return self.sensor.device_id if self.sensor else ""

@@ -59,7 +59,6 @@ async def create_event(
         )
 
     event_create_internal = schemas.event.EventCreateInternal(
-        device_id=event_in.root.device_id,
         timestamp=event_in.root.timestamp,
         event_type=event_in.root.event_type,
         data=event_in.root.model_dump(exclude={'device_id', 'timestamp', 'event_type'}),

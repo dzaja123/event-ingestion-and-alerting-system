@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 from app.models.models import Event, Sensor
 from app.schemas.event import EventCreateInternal, EventRead
 from typing import List, Optional
@@ -10,7 +11,6 @@ class CRUDEvent:
     async def create(self, db: AsyncSession, *, obj_in: EventCreateInternal) -> Event:
         db_obj = Event(
             sensor_id=obj_in.sensor_id,
-            device_id=obj_in.device_id,
             timestamp=obj_in.timestamp,
             event_type=obj_in.event_type,
             data=obj_in.data if obj_in.data else {}
@@ -18,6 +18,8 @@ class CRUDEvent:
         db.add(db_obj)
         await db.commit()
         await db.refresh(db_obj)
+        # Ensure sensor relationship is loaded
+        await db.refresh(db_obj, ['sensor'])
         return db_obj
 
 
@@ -32,7 +34,8 @@ class CRUDEvent:
         event_type: Optional[str] = None,
         device_type: Optional[str] = None
     ) -> List[EventRead]:
-        query = select(Event).order_by(Event.timestamp.desc())
+        # Eager load sensor relationship to avoid N+1 queries
+        query = select(Event).options(selectinload(Event.sensor)).order_by(Event.timestamp.desc())
 
         if start_time:
             query = query.filter(Event.timestamp >= start_time)
