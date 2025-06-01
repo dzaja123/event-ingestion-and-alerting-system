@@ -1,10 +1,9 @@
-# Use multi-stage build for smaller final image
 FROM python:3.11-slim AS builder
 
 WORKDIR /build
 
 # Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     gcc \
@@ -36,7 +35,7 @@ ENV PATH="/home/appuser/.local/bin:$PATH"
 ENV PYTHONPATH="/app"
 
 # Install runtime dependencies only
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     libpq5 \
     curl \
     tini \
@@ -60,7 +59,7 @@ RUN mkdir -p /app/logs \
 USER appuser
 
 # Add health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=60s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 EXPOSE 8000

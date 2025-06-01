@@ -33,7 +33,7 @@ class TestIoTSystem:
         for user_id in authorized_users:
             user_data = {"user_id": user_id}
             response = session.post(
-                f"{alerting_url}/authorized-users",
+                f"{alerting_url}/users",
                 json=user_data,
                 timeout=api_config["timeout"]
             )

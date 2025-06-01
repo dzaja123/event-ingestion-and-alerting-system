@@ -5,6 +5,8 @@ from datetime import datetime
 from app.schemas.sensor import SensorCreate
 from app.schemas.event import EventCreate
 
+# Valid 1x1 PNG image in base64 (smallest possible valid PNG)
+VALID_PNG_BASE64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAI/hGJJjwAAAABJRU5ErkJggg=="
 
 class TestSchemas:
     """Schema validation tests."""
@@ -82,13 +84,13 @@ class TestSchemas:
             "event_type": "motion_detected",
             "zone": "Restricted Area",
             "confidence": 0.95,
-            "photo_base64": "dGVzdA=="
+            "photo_base64": VALID_PNG_BASE64
         })
         assert event.root.device_id == "77:88:99:AA:BB:CC"
         assert event.root.event_type == "motion_detected"
         assert event.root.zone == "Restricted Area"
         assert event.root.confidence == 0.95
-        assert event.root.photo_base64 == "dGVzdA=="
+        assert event.root.photo_base64 == VALID_PNG_BASE64
 
     def test_access_control_event_missing_user_id(self):
         """Test access control event missing required user_id field."""
@@ -177,7 +179,7 @@ class TestSchemas:
             "event_type": "motion_detected",
             "zone": "Restricted Area",
             "confidence": 0.75,
-            "photo_base64": "dGVzdA=="
+            "photo_base64": VALID_PNG_BASE64
         })
         assert event.root.confidence == 0.75
 
@@ -189,5 +191,5 @@ class TestSchemas:
                 "event_type": "motion_detected",
                 "zone": "Restricted Area",
                 "confidence": 1.5,  # Above 1.0 limit
-                "photo_base64": "dGVzdA=="
+                "photo_base64": VALID_PNG_BASE64
             })

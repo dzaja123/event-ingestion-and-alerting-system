@@ -4,6 +4,7 @@ from typing import List, Optional
 from datetime import datetime
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from pydantic import ValidationError
 
 from app import crud
 from app.db.session import get_db
@@ -33,12 +34,18 @@ async def get_alerts(
     - speed_violation  
     - intrusion_detection
     """
-    filters = AlertFilter(
-        alert_type=alert_type,
-        device_id=device_id,
-        start_time=start_time,
-        end_time=end_time
-    )
+    try:
+        filters = AlertFilter(
+            alert_type=alert_type,
+            device_id=device_id,
+            start_time=start_time,
+            end_time=end_time
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid filter parameters: {e.errors()[0]['msg']} for field '{e.errors()[0]['loc'][0]}'"
+        )
     
     alerts = await crud.alert.get_multi(
         db,

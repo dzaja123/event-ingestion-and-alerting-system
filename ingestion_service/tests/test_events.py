@@ -1,6 +1,8 @@
 import pytest
 from httpx import AsyncClient
 
+# Valid 1x1 PNG image in base64 (smallest possible valid PNG)
+VALID_PNG_BASE64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAI/hGJJjwAAAABJRU5ErkJggg=="
 
 class TestEventsAPI:
     """Test cases for events API."""
@@ -159,7 +161,7 @@ class TestEventsAPI:
             "event_type": "motion_detected",
             "zone": "Restricted Area",
             "confidence": 0.95,
-            "photo_base64": "dGVzdA=="
+            "photo_base64": VALID_PNG_BASE64
         }
         response = await client.post("/api/v1/events/", json=invalid_event)
         assert response.status_code == 400
@@ -180,7 +182,7 @@ class TestEventsAPI:
             "event_type": "motion_detected",
             "zone": "Restricted Area",
             "confidence": 0.95,
-            "photo_base64": "dGVzdA=="
+            "photo_base64": VALID_PNG_BASE64
         }
         response = await client.post("/api/v1/events/", json=valid_event)
         assert response.status_code == 201
