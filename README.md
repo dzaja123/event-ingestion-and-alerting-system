@@ -26,6 +26,45 @@ docker-compose ps
 docker-compose down
 ```
 
+## Database Seeding
+
+The system includes **automatic seeding** of test data on startup for immediate functionality. Seeding is **enabled by default** (`ENABLE_SEEDING=true` in both services).
+
+### Seeded Data
+
+#### Ingestion Service
+- **Test sensors** (`ingestion_service/seed_data/sensors.json`):
+  ```
+  AA:BB:CC:DD:EE:FF - access_controller
+  11:22:33:44:55:66 - radar  
+  77:88:99:AA:BB:CC - security_camera
+  12:34:56:78:9A:BC - radar
+  AB:CD:EF:12:34:56 - access_controller
+  98:76:54:32:10:FE - security_camera
+  ```
+
+#### Alerting Service
+- **Authorized users** (`alerting_service/seed_data/authorized_users.json`):
+  ```
+  authorized_user, admin, security_guard, maintenance_staff, manager
+  ```
+
+### Seeding configuration
+
+Automatic seeding runs on service startup.
+
+**Environment variables:**
+```bash
+# Enable/disable seeding (default: true)
+ENABLE_SEEDING=true
+```
+
+**Manual seeding disable:**
+```bash
+# Set in .env file
+ENABLE_SEEDING=false
+```
+
 ## Testing
 
 ### Unit tests

@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     RABBITMQ_QUEUE_NAME: str = "event_processing_queue"
 
     SENSOR_CACHE_TTL_SECONDS: int = 3600 # 1 hour
+    
+    # Seeding configuration
+    ENABLE_SEEDING: bool = True
+    SEED_SAMPLE_EVENTS: bool = True
 
     LOG_LEVEL: str = "INFO"
 

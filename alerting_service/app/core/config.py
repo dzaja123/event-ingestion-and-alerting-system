@@ -29,6 +29,12 @@ class Settings(BaseSettings):
     # Alert thresholds
     SPEED_VIOLATION_THRESHOLD: int = 90  # km/h
     AUTHORIZED_USERS_CACHE_TTL: int = 3600  # 1 hour
+    
+    # Seeding configuration
+    ENABLE_SEEDING: bool = True
+    
+    # Service-to-service communication (optional)
+    INGESTION_SERVICE_URL: str | None = None
 
     LOG_LEVEL: str = "INFO"
 

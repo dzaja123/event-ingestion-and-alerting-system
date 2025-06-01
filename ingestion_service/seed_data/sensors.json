@@ -1,0 +1,26 @@
+[
+  {
+    "device_id": "AA:BB:CC:DD:EE:FF",
+    "device_type": "access_controller"
+  },
+  {
+    "device_id": "11:22:33:44:55:66", 
+    "device_type": "radar"
+  },
+  {
+    "device_id": "77:88:99:AA:BB:CC",
+    "device_type": "security_camera"
+  },
+  {
+    "device_id": "12:34:56:78:9A:BC",
+    "device_type": "radar"
+  },
+  {
+    "device_id": "AB:CD:EF:12:34:56",
+    "device_type": "access_controller"
+  },
+  {
+    "device_id": "98:76:54:32:10:FE",
+    "device_type": "security_camera"
+  }
+]

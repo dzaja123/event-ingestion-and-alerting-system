@@ -1,0 +1,22 @@
+[
+  {
+    "user_id": "authorized_user",
+    "description": "Standard authorized user for testing"
+  },
+  {
+    "user_id": "admin",
+    "description": "System administrator user"
+  },
+  {
+    "user_id": "security_guard",
+    "description": "Security personnel with access privileges"
+  },
+  {
+    "user_id": "maintenance_staff",
+    "description": "Maintenance team member"
+  },
+  {
+    "user_id": "manager",
+    "description": "Facility manager with full access"
+  }
+]
