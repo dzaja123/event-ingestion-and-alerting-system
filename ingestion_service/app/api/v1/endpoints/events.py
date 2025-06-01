@@ -80,10 +80,8 @@ async def create_event(
         logger.info(f"Event {event_out.id} successfully published to message queue")
     except ConnectionError as e:
         logger.warning(f"Failed to publish event {event_out.id} to RabbitMQ due to connection error: {e}")
-        # Event is still saved in DB, alerting service can process it later if needed
     except Exception as e:
         logger.error(f"Unexpected error during MQ publish for event {event_out.id}: {e}")
-        # Event is still saved in DB, but alerting might be delayed
 
     return event_out
 
