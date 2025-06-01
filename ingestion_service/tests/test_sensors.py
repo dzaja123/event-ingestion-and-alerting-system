@@ -3,7 +3,7 @@ from httpx import AsyncClient
 
 
 class TestSensorsAPI:
-    """Essential test cases for sensor API endpoints based on requirements."""
+    """Test cases for sensor API endpoints."""
 
     async def test_create_sensor_success(self, client: AsyncClient, sample_sensor_data):
         """Test successful sensor creation with MAC validation."""

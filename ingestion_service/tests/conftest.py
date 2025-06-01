@@ -103,7 +103,7 @@ async def sample_sensor(db_session: AsyncSession) -> Sensor:
     """Create a sample sensor for testing."""
     sensor = Sensor(
         device_id="AA:BB:CC:DD:EE:FF",
-        device_type="radar"
+        device_type="access_controller"
     )
     db_session.add(sensor)
     await db_session.commit()
@@ -131,7 +131,7 @@ def sample_sensor_data():
     """Sample sensor data for testing."""
     return {
         "device_id": "AA:BB:CC:DD:EE:FF",
-        "device_type": "radar"
+        "device_type": "access_controller"
     }
 
 
