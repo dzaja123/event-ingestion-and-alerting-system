@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app import crud, schemas
 from app.db.session import get_db
@@ -8,13 +10,16 @@ from app.services.cache_service import cache_service
 from app.schemas.common import MACAddress
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.get("/", response_model=List[schemas.sensor.SensorRead])
+@limiter.limit("100/minute")
 async def read_sensors(
+    request: Request,
     db: AsyncSession = Depends(get_db),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=500),
+    skip: int = Query(0, ge=0, description="Number of items to skip"),
+    limit: int = Query(100, ge=1, le=500, description="Maximum number of items to return"),
     device_type: Optional[str] = Query(None, description="Filter by device type")
 ):
     """
@@ -30,7 +35,9 @@ async def read_sensors(
 
 
 @router.post("/", response_model=schemas.sensor.SensorRead, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
 async def create_sensor(
+    request: Request,
     *,
     db: AsyncSession = Depends(get_db),
     sensor_in: schemas.sensor.SensorCreate
@@ -52,7 +59,9 @@ async def create_sensor(
 
 
 @router.get("/{device_id}", response_model=schemas.sensor.SensorRead)
+@limiter.limit("200/minute")
 async def read_sensor(
+    request: Request,
     device_id: MACAddress,
     db: AsyncSession = Depends(get_db)
 ):
@@ -66,7 +75,9 @@ async def read_sensor(
 
 
 @router.put("/{device_id}", response_model=schemas.sensor.SensorRead)
+@limiter.limit("20/minute")
 async def update_sensor(
+    request: Request,
     device_id: MACAddress,
     sensor_update: schemas.sensor.SensorUpdate,
     db: AsyncSession = Depends(get_db)
@@ -90,7 +101,9 @@ async def update_sensor(
 
 
 @router.patch("/{device_id}", response_model=schemas.sensor.SensorRead)
+@limiter.limit("20/minute")
 async def patch_sensor(
+    request: Request,
     device_id: MACAddress,
     sensor_update: schemas.sensor.SensorUpdate,
     db: AsyncSession = Depends(get_db)
@@ -114,7 +127,9 @@ async def patch_sensor(
 
 
 @router.delete("/{device_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("10/minute")
 async def delete_sensor(
+    request: Request,
     device_id: MACAddress,
     db: AsyncSession = Depends(get_db)
 ):

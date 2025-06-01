@@ -24,6 +24,10 @@ class CRUDAuthorizedUser:
         result = await db.execute(select(AuthorizedUser))
         return result.scalars().all()
 
+    async def get_multi(self, db: AsyncSession, *, skip: int = 0, limit: int = 100) -> List[AuthorizedUser]:
+        result = await db.execute(select(AuthorizedUser).offset(skip).limit(limit))
+        return result.scalars().all()
+
     async def is_user_authorized(self, db: AsyncSession, *, user_id: str) -> bool:
         user = await self.get_by_user_id(db, user_id=user_id)
         return user is not None

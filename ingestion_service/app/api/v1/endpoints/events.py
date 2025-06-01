@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from datetime import datetime
 import logging
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app import crud, schemas
 from app.db.session import get_db
@@ -12,11 +14,14 @@ from app.services.validation_service import validation_service
 from app.schemas.event import EventCreate, EventRead
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 logger = logging.getLogger(__name__)
 
 
 @router.post("/", response_model=EventRead, status_code=status.HTTP_201_CREATED)
+@limiter.limit("50/minute")
 async def create_event(
+    request: Request,
     *,
     db: AsyncSession = Depends(get_db),
     event_in: EventCreate
@@ -84,10 +89,12 @@ async def create_event(
 
 
 @router.get("/", response_model=List[schemas.event.EventRead])
+@limiter.limit("100/minute")
 async def read_events(
+    request: Request,
     db: AsyncSession = Depends(get_db),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=500),
+    skip: int = Query(0, ge=0, description="Number of items to skip"),
+    limit: int = Query(100, ge=1, le=500, description="Maximum number of items to return"),
     start_time: Optional[datetime] = Query(None, description="Filter events from this timestamp"),
     end_time: Optional[datetime] = Query(None, description="Filter events up to this timestamp"),
     event_type: Optional[str] = Query(None, description="Filter by event type"),

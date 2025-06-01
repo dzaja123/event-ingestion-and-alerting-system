@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app import crud
 from app.db.session import get_db
@@ -8,10 +10,13 @@ from app.schemas.authorized_user import AuthorizedUserCreate, AuthorizedUserRead
 from app.services.cache_service import cache_service
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post("/", response_model=AuthorizedUserRead, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
 async def create_authorized_user(
+    request: Request,
     user_in: AuthorizedUserCreate,
     db: AsyncSession = Depends(get_db)
 ):
@@ -36,18 +41,24 @@ async def create_authorized_user(
 
 
 @router.get("/", response_model=List[AuthorizedUserRead])
+@limiter.limit("100/minute")
 async def get_authorized_users(
-    db: AsyncSession = Depends(get_db)
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    skip: int = Query(0, ge=0, description="Number of items to skip"),
+    limit: int = Query(100, ge=1, le=500, description="Maximum number of items to return")
 ):
     """
-    Retrieve all authorized users.
+    Retrieve all authorized users with pagination.
     """
-    users = await crud.authorized_user.get_all(db)
+    users = await crud.authorized_user.get_multi(db, skip=skip, limit=limit)
     return users
 
 
 @router.get("/{user_id}", response_model=AuthorizedUserRead)
+@limiter.limit("200/minute")
 async def get_authorized_user(
+    request: Request,
     user_id: str,
     db: AsyncSession = Depends(get_db)
 ):
@@ -64,7 +75,9 @@ async def get_authorized_user(
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("10/minute")
 async def delete_authorized_user(
+    request: Request,
     user_id: str,
     db: AsyncSession = Depends(get_db)
 ):

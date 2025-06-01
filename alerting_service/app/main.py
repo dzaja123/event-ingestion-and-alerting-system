@@ -4,6 +4,9 @@ import asyncio
 import logging
 import uvicorn
 from sqlalchemy import text
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from app.api.v1.api import api_router
 from app.core.config import settings
@@ -11,11 +14,15 @@ from app.services.rabbitmq_consumer import rabbitmq_consumer
 from app.services.cache_service import cache_service
 from app.db.session import AsyncSessionLocal
 from app.core.seeder import alerting_seeder
+from app.services.message_queue_service import message_queue_service
 
 
 # Configure logging
 logging.basicConfig(level=settings.LOG_LEVEL.upper())
 logger = logging.getLogger(__name__)
+
+# Rate limiter setup
+limiter = Limiter(key_func=get_remote_address)
 
 
 @asynccontextmanager
@@ -73,6 +80,10 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan
 )
+
+# Add rate limiting
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
