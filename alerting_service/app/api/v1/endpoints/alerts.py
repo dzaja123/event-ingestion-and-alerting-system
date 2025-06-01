@@ -1,20 +1,25 @@
-from fastapi import APIRouter, Depends, Query, status, HTTPException
+from fastapi import APIRouter, Depends, Query, status, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from datetime import datetime
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app import crud
 from app.db.session import get_db
 from app.schemas.alert import AlertRead, AlertFilter
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.get("/", response_model=List[AlertRead])
+@limiter.limit("100/minute")
 async def get_alerts(
+    request: Request,
     db: AsyncSession = Depends(get_db),
-    skip: int = Query(0, ge=0, description="Number of alerts to skip"),
-    limit: int = Query(100, ge=1, le=500, description="Maximum number of alerts to return"),
+    skip: int = Query(0, ge=0, description="Number of items to skip"),
+    limit: int = Query(100, ge=1, le=500, description="Maximum number of items to return"),
     alert_type: Optional[str] = Query(None, description="Filter by alert type"),
     device_id: Optional[str] = Query(None, description="Filter by device ID"),
     start_time: Optional[datetime] = Query(None, description="Filter alerts from this timestamp"),
@@ -46,7 +51,9 @@ async def get_alerts(
 
 
 @router.get("/{alert_id}", response_model=AlertRead)
+@limiter.limit("200/minute")
 async def get_alert_by_id(
+    request: Request,
     alert_id: int,
     db: AsyncSession = Depends(get_db)
 ):

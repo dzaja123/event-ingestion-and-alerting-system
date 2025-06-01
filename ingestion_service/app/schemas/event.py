@@ -75,14 +75,17 @@ class EventCreate(RootModel[Union[AccessControlEvent, RadarSpeedEvent, Intrusion
         return getattr(self.root, name)
 
 
-class EventCreateInternal(EventBase):
+class EventCreateInternal(BaseModel):
+    timestamp: datetime
     event_type: str
     data: Optional[dict] = None
     sensor_id: int
 
 
-class EventRead(EventBase):
+class EventRead(BaseModel):
     id: int
+    device_id: str
+    timestamp: datetime
     sensor_id: int
     event_type: str
     data: Optional[dict] = None
