@@ -1,12 +1,13 @@
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Optional
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 from app.schemas.common import MACAddress
+from app.domain.sensor_types import DeviceType
 
 
 class SensorBase(BaseModel):
     device_id: MACAddress
-    device_type: Literal["radar", "security_camera", "access_controller"] = Field(
+    device_type: DeviceType = Field(
         description="Type of IoT sensor device"
     )
 
@@ -22,7 +23,7 @@ class SensorCreate(SensorBase):
 
 class SensorUpdate(BaseModel):
     """Schema for updating sensor details - only device_type can be updated"""
-    device_type: Optional[Literal["radar", "security_camera", "access_controller"]] = Field(
+    device_type: Optional[DeviceType] = Field(
         None, description="Type of IoT sensor device"
     )
 

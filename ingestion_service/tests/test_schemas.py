@@ -7,7 +7,7 @@ from app.schemas.event import EventCreate
 
 
 class TestSchemas:
-    """Essential schema validation tests based on requirements."""
+    """Schema validation tests."""
 
     def test_mac_address_valid_formats(self):
         """Test valid MAC address formats."""
@@ -48,47 +48,146 @@ class TestSchemas:
         with pytest.raises(ValidationError):
             SensorCreate(device_id="AA:BB:CC:DD:EE:FF", device_type="invalid_type")
 
-    def test_event_create_basic(self):
-        """Test basic event creation."""
-        event = EventCreate(
-            device_id="AA:BB:CC:DD:EE:FF",
-            timestamp=datetime(2024, 12, 18, 14, 0, 0),
-            event_type="access_attempt"
-        )
-        assert event.device_id == "AA:BB:CC:DD:EE:FF"
-        assert event.event_type == "access_attempt"
+    def test_access_control_event_valid(self):
+        """Test valid access control event creation."""
+        event = EventCreate.model_validate({
+            "device_id": "AA:BB:CC:DD:EE:FF",
+            "timestamp": "2024-12-18T14:00:00Z",
+            "event_type": "access_attempt",
+            "user_id": "test_user"
+        })
+        assert event.root.device_id == "AA:BB:CC:DD:EE:FF"
+        assert event.root.event_type == "access_attempt"
+        assert event.root.user_id == "test_user"
 
-    def test_event_create_with_access_fields(self):
-        """Test event creation with access control fields."""
-        event = EventCreate(
-            device_id="AA:BB:CC:DD:EE:FF",
-            timestamp=datetime(2024, 12, 18, 14, 0, 0),
-            event_type="access_attempt",
-            user_id="test_user"
-        )
-        assert event.user_id == "test_user"
+    def test_speed_violation_event_valid(self):
+        """Test valid speed violation event creation."""
+        event = EventCreate.model_validate({
+            "device_id": "11:22:33:44:55:66",
+            "timestamp": "2024-12-18T14:00:00Z",
+            "event_type": "speed_violation",
+            "speed_kmh": 120,
+            "location": "Zone A"
+        })
+        assert event.root.device_id == "11:22:33:44:55:66"
+        assert event.root.event_type == "speed_violation"
+        assert event.root.speed_kmh == 120
+        assert event.root.location == "Zone A"
 
-    def test_event_create_with_speed_fields(self):
-        """Test event creation with speed violation fields."""
-        event = EventCreate(
-            device_id="11:22:33:44:55:66",
-            timestamp=datetime(2024, 12, 18, 14, 0, 0),
-            event_type="speed_violation",
-            speed_kmh=120,
-            location="Zone A"
-        )
-        assert event.speed_kmh == 120
-        assert event.location == "Zone A"
+    def test_intrusion_detection_event_valid(self):
+        """Test valid intrusion detection event creation."""
+        event = EventCreate.model_validate({
+            "device_id": "77:88:99:AA:BB:CC",
+            "timestamp": "2024-12-18T22:00:00Z",
+            "event_type": "motion_detected",
+            "zone": "Restricted Area",
+            "confidence": 0.95,
+            "photo_base64": "dGVzdA=="
+        })
+        assert event.root.device_id == "77:88:99:AA:BB:CC"
+        assert event.root.event_type == "motion_detected"
+        assert event.root.zone == "Restricted Area"
+        assert event.root.confidence == 0.95
+        assert event.root.photo_base64 == "dGVzdA=="
 
-    def test_event_create_with_intrusion_fields(self):
-        """Test event creation with intrusion detection fields."""
-        event = EventCreate(
-            device_id="77:88:99:AA:BB:CC",
-            timestamp=datetime(2024, 12, 18, 22, 0, 0),
-            event_type="motion_detected",
-            zone="Restricted Area",
-            confidence=0.95,
-            photo_base64="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
-        )
-        assert event.zone == "Restricted Area"
-        assert event.confidence == 0.95 
+    def test_access_control_event_missing_user_id(self):
+        """Test access control event missing required user_id field."""
+        with pytest.raises(ValidationError):
+            EventCreate.model_validate({
+                "device_id": "AA:BB:CC:DD:EE:FF",
+                "timestamp": "2024-12-18T14:00:00Z",
+                "event_type": "access_attempt"
+                # Missing user_id
+            })
+
+    def test_speed_violation_event_missing_fields(self):
+        """Test speed violation event missing required fields."""
+        with pytest.raises(ValidationError):
+            EventCreate.model_validate({
+                "device_id": "11:22:33:44:55:66",
+                "timestamp": "2024-12-18T14:00:00Z",
+                "event_type": "speed_violation",
+                "speed_kmh": 120
+                # Missing location
+            })
+
+    def test_intrusion_detection_event_missing_fields(self):
+        """Test intrusion detection event missing required fields."""
+        with pytest.raises(ValidationError):
+            EventCreate.model_validate({
+                "device_id": "77:88:99:AA:BB:CC",
+                "timestamp": "2024-12-18T22:00:00Z",
+                "event_type": "motion_detected",
+                "zone": "Restricted Area"
+                # Missing confidence and photo_base64
+            })
+
+    def test_mixed_fields_rejected(self):
+        """Test that mixed fields from different event types are rejected."""
+        with pytest.raises(ValidationError) as exc_info:
+            EventCreate.model_validate({
+                "device_id": "AA:BB:CC:DD:EE:FF",
+                "timestamp": "2024-12-18T14:00:00Z",
+                "event_type": "access_attempt",
+                "user_id": "test_user",
+                "speed_kmh": 120  # This should not be allowed for access_attempt
+            })
+        assert "Extra fields not allowed" in str(exc_info.value)
+
+    def test_invalid_base64_photo(self):
+        """Test invalid base64 photo validation."""
+        with pytest.raises(ValidationError):
+            EventCreate.model_validate({
+                "device_id": "77:88:99:AA:BB:CC",
+                "timestamp": "2024-12-18T22:00:00Z",
+                "event_type": "motion_detected",
+                "zone": "Restricted Area",
+                "confidence": 0.95,
+                "photo_base64": "invalid_base64!"
+            })
+
+    def test_speed_validation_bounds(self):
+        """Test speed validation bounds (0-300 km/h)."""
+        # Valid speed
+        event = EventCreate.model_validate({
+            "device_id": "11:22:33:44:55:66",
+            "timestamp": "2024-12-18T14:00:00Z",
+            "event_type": "speed_violation",
+            "speed_kmh": 150,
+            "location": "Zone A"
+        })
+        assert event.root.speed_kmh == 150
+
+        # Invalid speed (too high)
+        with pytest.raises(ValidationError):
+            EventCreate.model_validate({
+                "device_id": "11:22:33:44:55:66",
+                "timestamp": "2024-12-18T14:00:00Z",
+                "event_type": "speed_violation",
+                "speed_kmh": 350,  # Above 300 limit
+                "location": "Zone A"
+            })
+
+    def test_confidence_validation_bounds(self):
+        """Test confidence validation bounds (0.0-1.0)."""
+        # Valid confidence
+        event = EventCreate.model_validate({
+            "device_id": "77:88:99:AA:BB:CC",
+            "timestamp": "2024-12-18T22:00:00Z",
+            "event_type": "motion_detected",
+            "zone": "Restricted Area",
+            "confidence": 0.75,
+            "photo_base64": "dGVzdA=="
+        })
+        assert event.root.confidence == 0.75
+
+        # Invalid confidence (too high)
+        with pytest.raises(ValidationError):
+            EventCreate.model_validate({
+                "device_id": "77:88:99:AA:BB:CC",
+                "timestamp": "2024-12-18T22:00:00Z",
+                "event_type": "motion_detected",
+                "zone": "Restricted Area",
+                "confidence": 1.5,  # Above 1.0 limit
+                "photo_base64": "dGVzdA=="
+            })
