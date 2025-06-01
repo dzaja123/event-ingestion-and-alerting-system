@@ -10,6 +10,7 @@ from app.services.message_queue_service import message_queue_service
 from app.services.cache_service import cache_service
 from app.db.session import engine, AsyncSessionLocal
 from app.models.models import Base
+from app.core.seeder import ingestion_seeder
 
 
 # Configure logging
@@ -30,7 +31,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to initialize database schema: {e}")
         raise
-    
+
+    # Seed database if enabled
+    if settings.ENABLE_SEEDING:
+        try:
+            async with AsyncSessionLocal() as db:
+                await ingestion_seeder.seed_all(db)
+            logger.info("Database seeding completed.")
+        except Exception as e:
+            logger.error(f"Failed to seed database: {e}")
+
     try:
         await message_queue_service.connect()
         logger.info("Connected to Message Queue.")

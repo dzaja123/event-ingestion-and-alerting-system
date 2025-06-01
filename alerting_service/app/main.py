@@ -11,6 +11,8 @@ from app.services.rabbitmq_consumer import rabbitmq_consumer
 from app.services.cache_service import cache_service
 from app.db.session import engine, AsyncSessionLocal
 from app.models.models import Base
+from app.core.seeder import alerting_seeder
+
 
 # Configure logging
 logging.basicConfig(level=settings.LOG_LEVEL.upper())
@@ -30,7 +32,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to initialize database schema: {e}")
         raise
-    
+
+    # Seed database if enabled
+    if settings.ENABLE_SEEDING:
+        try:
+            async with AsyncSessionLocal() as session:
+                await alerting_seeder.seed_all(session)
+            logger.info("Database seeding completed successfully.")
+        except Exception as e:
+            logger.error(f"Database seeding failed: {e}")
+
     try:
         # Initialize authorized users cache
         await rabbitmq_consumer.initialize_authorized_users_cache()
@@ -126,4 +137,4 @@ async def health_check():
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    uvicorn.run(app, host="0.0.0.0", port=8000)
