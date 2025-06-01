@@ -35,7 +35,7 @@ async def read_sensors(
 
 
 @router.post("/", response_model=schemas.sensor.SensorRead, status_code=status.HTTP_201_CREATED)
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def create_sensor(
     request: Request,
     *,
@@ -127,7 +127,7 @@ async def patch_sensor(
 
 
 @router.delete("/{device_id}", status_code=status.HTTP_204_NO_CONTENT)
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def delete_sensor(
     request: Request,
     device_id: MACAddress,

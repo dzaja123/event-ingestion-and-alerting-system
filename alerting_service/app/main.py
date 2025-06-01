@@ -14,7 +14,6 @@ from app.services.rabbitmq_consumer import rabbitmq_consumer
 from app.services.cache_service import cache_service
 from app.db.session import AsyncSessionLocal
 from app.core.seeder import alerting_seeder
-from app.services.message_queue_service import message_queue_service
 
 
 # Configure logging
