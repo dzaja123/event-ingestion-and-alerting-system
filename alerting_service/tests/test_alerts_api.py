@@ -3,6 +3,9 @@ from httpx import AsyncClient
 from datetime import datetime
 
 from app.schemas.alert import AlertCreate
+from unittest.mock import AsyncMock, MagicMock
+from app.services.rabbitmq_consumer import rabbitmq_consumer
+from app.crud.alert import alert
 
 
 class TestAlertsAPI:
@@ -35,8 +38,7 @@ class TestAlertsAPI:
 
     async def test_get_alerts_filter_by_alert_type(self, client: AsyncClient, db_session):
         """Test filtering alerts by alert type."""
-        from app.crud.alert import alert
-        
+
         # Create alerts of different types
         alerts = [
             AlertCreate(
@@ -64,8 +66,7 @@ class TestAlertsAPI:
 
     async def test_get_alerts_filter_by_device_id(self, client: AsyncClient, db_session):
         """Test filtering alerts by device ID."""
-        from app.crud.alert import alert
-        
+
         device_id = "AA:BB:CC:DD:EE:FF"
         alert_data = AlertCreate(
             event_id=1,
@@ -84,8 +85,7 @@ class TestAlertsAPI:
 
     async def test_get_alert_by_id_success(self, client: AsyncClient, db_session):
         """Test getting specific alert by ID."""
-        from app.crud.alert import alert
-        
+
         alert_data = AlertCreate(
             event_id=1,
             device_id="AA:BB:CC:DD:EE:FF",
@@ -108,9 +108,7 @@ class TestAlertsAPI:
 
     async def test_health_endpoint(self, client: AsyncClient, mock_cache_service):
         """Test health check endpoint."""
-        from unittest.mock import AsyncMock, MagicMock
-        from app.services.rabbitmq_consumer import rabbitmq_consumer
-        
+
         # Mock Redis ping
         mock_cache_service.redis_client.ping = AsyncMock(return_value=True)
         

@@ -4,10 +4,9 @@ from pathlib import Path
 from typing import List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from datetime import datetime
 
 from app import crud, schemas
-from app.models.models import Sensor, Event
+from app.models.models import Sensor
 from app.services.cache_service import cache_service
 
 

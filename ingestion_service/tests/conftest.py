@@ -4,7 +4,7 @@ from typing import AsyncGenerator
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 from app.main import app
 from app.db.session import get_db
@@ -12,9 +12,8 @@ from app.models.models import Base
 from app.services.cache_service import cache_service
 from app.services.message_queue_service import message_queue_service
 from app.models.models import Sensor, Event
-from app.schemas.sensor import SensorCreate
-from app.schemas.event import EventCreate
 from datetime import datetime, timezone
+from app.db.base_class import Base
 
 
 # Test database URL, in-memory SQLite for testing
@@ -46,9 +45,7 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
         echo=False,
         future=True
     )
-    
-    # Create all tables
-    from app.db.base_class import Base
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     
