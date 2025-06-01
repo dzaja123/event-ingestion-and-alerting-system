@@ -89,6 +89,30 @@ async def update_sensor(
     return sensor_read
 
 
+@router.patch("/{device_id}", response_model=schemas.sensor.SensorRead)
+async def patch_sensor(
+    device_id: MACAddress,
+    sensor_update: schemas.sensor.SensorUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Patch sensor details
+    """
+    sensor = await crud.sensor.update_by_device_id(db, device_id=device_id, obj_in=sensor_update)
+    if not sensor:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Sensor not found or inactive"
+        )
+
+    # Invalidate cache and update with new data
+    await cache_service.delete_sensor_details(device_id)
+    sensor_read = schemas.sensor.SensorRead.model_validate(sensor)
+    await cache_service.set_sensor_details(sensor_read)
+    
+    return sensor_read
+
+
 @router.delete("/{device_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_sensor(
     device_id: MACAddress,

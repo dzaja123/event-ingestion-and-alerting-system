@@ -82,18 +82,3 @@ async def delete_authorized_user(
     users = await crud.authorized_user.get_all(db)
     user_ids = {user.user_id for user in users}
     await cache_service.set_authorized_users(user_ids)
-
-
-@router.get("/{user_id}/check", response_model=dict)
-async def check_user_authorization(
-    user_id: str,
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Check if a user is authorized (useful for testing).
-    """
-    is_authorized = await crud.authorized_user.is_user_authorized(db, user_id=user_id)
-    return {
-        "user_id": user_id,
-        "is_authorized": is_authorized
-    }

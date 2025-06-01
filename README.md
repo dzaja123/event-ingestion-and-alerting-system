@@ -229,17 +229,20 @@ Event input → Schema validation → Domain validation → Event type-Sensor ty
 ### Ingestion service (port 8000)
 - `POST /api/v1/sensors` - Register sensor
 - `GET /api/v1/sensors` - List sensors
+- `GET /api/v1/sensors/{device_id}` - Get specific sensor
+- `PUT /api/v1/sensors/{device_id}` - Replace sensor (full update)
+- `PATCH /api/v1/sensors/{device_id}` - Update sensor (partial update)
+- `DELETE /api/v1/sensors/{device_id}` - Delete sensor
 - `POST /api/v1/events` - Submit events
 - `GET /api/v1/events` - Retrieve events with filters
-- `PUT /api/v1/sensors/{device_id}` - Update sensor
-- `DELETE /api/v1/sensors/{device_id}` - Delete sensor
 
 ### Alerting service (port 8001)
 - `GET /api/v1/alerts` - Retrieve alerts with filters
 - `GET /api/v1/alerts/{id}` - Get specific alert
-- `POST /api/v1/authorized-users` - Add authorized user
-- `GET /api/v1/authorized-users` - List authorized users
-- `DELETE /api/v1/authorized-users/{user_id}` - Remove authorized user
+- `POST /api/v1/users` - Add authorized user
+- `GET /api/v1/users` - List authorized users
+- `GET /api/v1/users/{user_id}` - Get specific authorized user
+- `DELETE /api/v1/users/{user_id}` - Remove authorized user
 
 Full API documentation available at `/docs` endpoints.
 
