@@ -48,6 +48,9 @@ COPY --from=builder /root/.local /home/appuser/.local
 
 # Copy application code
 COPY --chown=appuser:appuser ./app /app/app
+COPY --chown=appuser:appuser ./migrate.py /app/migrate.py
+COPY --chown=appuser:appuser ./alembic.ini /app/alembic.ini
+COPY --chown=appuser:appuser ./migrations /app/migrations
 
 # Create necessary directories with proper permissions
 RUN mkdir -p /app/logs \

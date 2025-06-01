@@ -9,8 +9,7 @@ from app.api.v1.api import api_router
 from app.core.config import settings
 from app.services.rabbitmq_consumer import rabbitmq_consumer
 from app.services.cache_service import cache_service
-from app.db.session import engine, AsyncSessionLocal
-from app.models.models import Base
+from app.db.session import AsyncSessionLocal
 from app.core.seeder import alerting_seeder
 
 
@@ -23,15 +22,6 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     # Startup
     logger.info("Alerting Service starting up...")
-    
-    # Initialize database schema
-    try:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        logger.info("Database schema initialized.")
-    except Exception as e:
-        logger.error(f"Failed to initialize database schema: {e}")
-        raise
 
     # Seed database if enabled
     if settings.ENABLE_SEEDING:
