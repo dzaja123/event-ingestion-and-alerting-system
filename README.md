@@ -92,8 +92,6 @@ pip install -r requirements.txt
 python run_tests.py
 ```
 
-
-
 **Access points:**
 - Ingestion API: http://localhost:8000/docs
 - Alerting API: http://localhost:8001/docs  
@@ -114,11 +112,12 @@ Two microservices communicate via RabbitMQ:
 **Data flow:**
 1. Sensors must be registered first via POST /api/v1/sensors
 2. IoT devices send events to Ingestion Service REST API
-3. Ingestion Service validates device_id against cached sensor data
-4. Events from unregistered device_ids are rejected
-5. Valid events are stored in PostgreSQL and published to RabbitMQ
-6. Alerting Service consumes events and generates alerts when criteria are met
-7. Alerts are stored in PostgreSQL and retrieved via REST API
+3. Ingestion service validates that event type is valid with the sensor type
+4. Ingestion Service validates device_id against cached sensor data
+5. Events from unregistered device_ids are rejected
+6. Valid events are stored in PostgreSQL and published to RabbitMQ
+7. Alerting Service consumes events and generates alerts when criteria are met
+8. Alerts are stored in PostgreSQL and retrieved via REST API
 
 ## Database schema
 
@@ -134,10 +133,17 @@ Two microservices communicate via RabbitMQ:
 
 ## Data validation
 
-**Validation rules:**
-- device_id must be valid MAC address format (e.g., AA:BB:CC:DD:EE:FF)
+#### Validation rules:
+- `device_id` must be valid MAC address format (AA:BB:CC:DD:EE:FF)
 - Only registered sensors can submit events
-- Unregistered sensors are rejected with 403 Forbidden
+- Device type must match coresponding event type (enforced by domain rules)
+- No extra fields allowed
+- Unregistered sensors rejected with 403 Forbidden
+
+#### Validation flow:
+```
+Event input → Schema validation → Domain validation → Event type-Sensor type → Storage
+```
 
 **Caching strategy:**
 - Sensor details cached in Redis for fast device_id validation
